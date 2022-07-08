@@ -76,7 +76,7 @@ fn write_flash(addr: usize, data: &[u8], len: usize) {
 #[inline(never)]
 #[link_section = ".data.ram_func"]
 fn chip_erase(){
-    // let mut total_blocks = 0;
+    let mut total_sectors = 0;
     let mut temp_sector_buf = [0;4096];
     for x in 0..4096{
         temp_sector_buf[x] = 0x55;
@@ -84,19 +84,20 @@ fn chip_erase(){
     for block_num in 1..32{
         for sector_num in 0..16{
             let sector_start_addr= (block_num*65536) + (sector_num*4096);
-            unsafe {
-                cortex_m::interrupt::free(|_cs| {
-                    rom_data::connect_internal_flash();
-                    rom_data::flash_exit_xip();
-                    rom_data::flash_range_erase(sector_start_addr as u32, SECTOR_SIZE, BLOCK_SIZE, SECTOR_ERASE);
-                    rom_data::flash_range_program(sector_start_addr as u32, temp_sector_buf.as_ptr(), temp_sector_buf.len());
-                    rom_data::flash_flush_cache(); // Get the XIP working again
-                    rom_data::flash_enter_cmd_xip(); // Start XIP back up
-                });
-            }
+            // unsafe {
+            //     cortex_m::interrupt::free(|_cs| {
+            //         rom_data::connect_internal_flash();
+            //         rom_data::flash_exit_xip();
+            //         rom_data::flash_range_erase(sector_start_addr as u32, SECTOR_SIZE, BLOCK_SIZE, SECTOR_ERASE);
+            //         // rom_data::flash_range_program(sector_start_addr as u32, temp_sector_buf.as_ptr(), temp_sector_buf.len());
+            //         rom_data::flash_flush_cache(); // Get the XIP working again
+            //         rom_data::flash_enter_cmd_xip(); // Start XIP back up
+            //     });
+            // }
+            defmt::println!("{}: sector_start_addr: {:x}\t block :{}\t sector:{}", total_sectors, sector_start_addr, block_num, sector_num);
+            total_sectors += 1;
         }
-        // defmt::println!("{}: Block Start Address: {:x}", total_blocks, (block_num*65536));
-        // total_blocks += 1;
+
     }
     // info!("Chip erase complete.");
     // defmt::println!("Chip erase complete.");
@@ -138,57 +139,7 @@ pub fn boot_from(fw_base_address: usize) {
 #[entry]
 fn main() -> ! {
 
-    //erase_flash(FLASH_ADDRESS_OFFSET);
-
-    //let data = crate::read_flash(FLASH_ADDRESS_OFFSET);
-
-    //defmt::println!("Flash data[0]: {:?}", data[0]);
-
-    let mut buf = [0; 16];
-
-
-    // for x in 0..256{
-    //     buf[x] = 0xff;
-    // }
-    // buf[4] = 0x55;
-
-    // // buf[1] = 0x11;
-    // // buf[2] = 0x33;
-    // // buf[3] = 0x22;
-    // // buf[4] = 0x11;
-
-    // let mut buf = [0; 256];
-    // for x in 0..256{
-    //     buf[x] = 0x55;
-    // }
-
-    buf[0] = 0x77;
-    buf[1] = 0x55;
-    buf[2] = 0x77;
-    buf[3] = 0x55;
-    buf[4] = 0x77;
-    buf[5] = 0x55;
-    buf[6] = 0x77;
-    buf[7] = 0x55;
-    buf[8] = 0x77;
-    buf[9] = 0x55;
-    buf[10] = 0x77;
-    buf[11] = 0x55;
-    buf[12] = 0x77;
-    buf[13] = 0x55;
-    buf[14] = 0x77;
-    buf[15] = 0x55;
-    crate::write_flash((FLASH_ADDRESS_OFFSET) as usize, &buf, buf.len());
-
-    // let data2 = crate::read_flash(FLASH_ADDRESS_OFFSET);
-
-    // defmt::println!("Flash data[0]: {:?}", data2[0]);
-
-    // chip_erase();
-
-    // boot_sfrom(FLASH_XIP_APPLISTART_ADDR as usize);
-
-    // defmt::println!("Flash Erase Complete.");
+    chip_erase();
 
     loop {
         

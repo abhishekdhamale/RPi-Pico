@@ -4,17 +4,21 @@
 #![no_std]
 #![no_main]
 
+
 use bsp::entry;
 use defmt::*;
 use defmt_rtt as _;
 use embedded_hal::digital::v2::OutputPin;
 use embedded_time::fixed_point::FixedPoint;
 use panic_probe as _;
+use core::arch::asm;
 
 // Provide an alias for our BSP so we can switch targets quickly.
 // Uncomment the BSP you included in Cargo.toml, the rest of the code does not need to change.
 use rp_pico as bsp;
 // use sparkfun_pro_micro_rp2040 as bsp;
+
+use cortex_m::asm;
 
 use bsp::hal::{
     clocks::{init_clocks_and_plls, Clock},
@@ -27,25 +31,25 @@ use bsp::hal::{
 fn main() -> ! {
     info!("Program start");
     let mut pac = pac::Peripherals::take().unwrap();
-    let core = pac::CorePeripherals::take().unwrap();
-    let mut watchdog = Watchdog::new(pac.WATCHDOG);
+    // let core = pac::CorePeripherals::take().unwrap();
+    // let mut watchdog = Watchdog::new(pac.WATCHDOG);
     let sio = Sio::new(pac.SIO);
 
-    // External high-speed crystal on the pico board is 12Mhz
-    let external_xtal_freq_hz = 12_000_000u32;
-    let clocks = init_clocks_and_plls(
-        external_xtal_freq_hz,
-        pac.XOSC,
-        pac.CLOCKS,
-        pac.PLL_SYS,
-        pac.PLL_USB,
-        &mut pac.RESETS,
-        &mut watchdog,
-    )
-    .ok()
-    .unwrap();
+    // // External high-speed crystal on the pico board is 12Mhz
+    // let external_xtal_freq_hz = 12_000_000u32;
+    // let clocks = init_clocks_and_plls(
+    //     external_xtal_freq_hz,
+    //     pac.XOSC,
+    //     pac.CLOCKS,
+    //     pac.PLL_SYS,
+    //     pac.PLL_USB,
+    //     &mut pac.RESETS,
+    //     &mut watchdog,
+    // )
+    // .ok()
+    // .unwrap();
 
-    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().integer());
+    // let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().integer());
 
     let pins = bsp::Pins::new(
         pac.IO_BANK0,
@@ -56,15 +60,34 @@ fn main() -> ! {
 
     let mut led_pin = pins.led.into_push_pull_output();
 
+    led_pin.set_low().unwrap();
+
     loop {
+
         info!("on!");
-        led_pin.set_high().unwrap();
-        delay.delay_ms(50);
-        info!("off!");
+
         led_pin.set_low().unwrap();
-        delay.delay_ms(50);
+        
+        asm::delay(800000);
+
+        for _x in 0..80000{
+            for _y in 0..500{
+                
+            }
+        }
+        
+        info!("off!");
+        led_pin.set_high().unwrap();
+        asm::delay(800000);
+        // for _x in 0..80000{
+        //     for _y in 0..500{
+
+        //     }
+        // }
     }
     //bsp::pac::SCB::sys_reset();
 }
+
+
 
 // End of file
